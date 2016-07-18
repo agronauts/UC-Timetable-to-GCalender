@@ -10,8 +10,9 @@ Download or clone the python script to a suitable location and you're ready to g
 # Usage
 1. In the UC Timetable web app, go:
     a. Timetable
-    b. Export button (Looks like a square with an arrow protuding out the right side of it) 
-    c. Text
+    b. Change to **All Weeks**
+    c. Export button (Looks like a square with an arrow protuding out the right side of it) 
+    d. Text
 2. Move the CSV file into the same directory as the python script.
 3. From the command line, run `python UC_Timetable_GCalender.py filename` where `filename` is the name of the downloaded CSV file
 4. In Google Calenders, go:
