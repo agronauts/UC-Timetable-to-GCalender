@@ -10,6 +10,8 @@ Todo:
     -GUI
     -Webcal server
 """
+import sys
+from tkinter import *
 import csv
 import argparse
 import re
@@ -44,7 +46,7 @@ def make_g_event(UC_event, date):
     #Location : The location for the event. : Example: "Columbia, Schermerhorn 614"
     #Private : Whether the event should be marked private. Enter True if the event is private, and False if it isn't. : Example: True
     g_event = {}
-    g_event['Subject'] = UC_event['Subject Code'].split('-')[0] + ' ' + UC_event['Group']
+    g_event['Subject'] =  UC_event['Group'] + ' ' + UC_event['Subject Code'].split('-')[0] 
     g_event['Start Date'] = date.strftime(DATE_OUTPUT_FORMAT)
     g_event['Start Time'] = parseStartTime(UC_event['Time'])
     g_event['End Date'] = date.strftime(DATE_OUTPUT_FORMAT)
@@ -117,27 +119,70 @@ def get_dates(UC_event):
             cur_d = beg_d
             dates.append(cur_d)
             cur_d = cur_d + timedelta(weeks=1)
-            while cur_d < end_d:
+            while cur_d <= end_d:
                 dates.append(cur_d)
                 cur_d = cur_d + timedelta(weeks=1)
     return dates
 
-if __name__ == "__main__":
-    args = parse_args()
-    g_events = []
 
+def gui_mode():
+    class Application(Frame):
+        def find_file(self):
+            print("Finding file")
+            #self.dest = filechooser
+            self.g_events = process_UC_file(dest)
+
+        def convert_file(self):
+            write_file(self.dest, self.g_events)
+
+        def createWidgets(self):
+            self.b_file_chooser = Button(self)
+            self.b_file_chooser["text"] = "Choose file"
+            self.b_file_chooser["command"] = self.find_file
+            self.b_file_chooser.pack({"side": "left"})
+
+            self.b_converter = Button(self)
+            self.b_converter["text"] = "Convert"
+            self.b_converter["command"] = self.convert_file
+            self.b_converter.pack({"side": "right"})
+
+        def __init__(self, master=None):
+            Frame.__init__(self, master)
+            self.pack()
+            self.createWidgets()
+
+    root = Tk()
+    app = Application(master=root)
+    app.mainloop()
+    root.destroy() 
+
+def command_line_mode():
+    args = parse_args()
+    g_events = process_UC_file(args.source)
+    write_file(args.dest, g_events)
+
+def process_UC_file(src):
     #open file
     #Process into dictionary
-    with open(args.source) as csvfile:
+    g_events = []
+    with open(src) as csvfile:
         reader = csv.DictReader(csvfile, delimiter="\t")
         for UC_event in reader:
             #WHere get teacher?
             for date in get_dates(UC_event):
                 g_events.append(make_g_event(UC_event, date))
+    return g_events
 
+def write_file(dest, g_events):
     #Write CSV
-    with open(args.dest, 'w') as csvfile:
+    with open(dest, 'w') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=G_EVENT_FIELDNAMES)
         writer.writeheader()
         for g_event in g_events:
             writer.writerow(g_event)
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        command_line_mode()
+    else:
+        gui_mode()
